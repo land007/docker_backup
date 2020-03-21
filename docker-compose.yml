@@ -2,7 +2,7 @@ version: "3"
 
 services:
   rsync:
-    image: instrumentisto/rsync-ssh
+    image: land007/rsync-ssh:latest
     restart: always
     container_name: rsync
     volumes:
@@ -24,6 +24,7 @@ services:
           log "$$3 $$1 开始备份"
           #rsync -az --timeout=3600 -P --partial --delete -e ssh root@$$2:$${3:-/docker/.} /backup/$$2.backup
           #rsync -az --timeout=3600 -P --partial --delete -e ssh $$2@$$3:$${4:-/docker/.} /backup/$$3.$$1.backup
+          log "rsync $$5 --timeout=3600 -P --partial -e ssh $$2@$$3:$${4:-/docker/.} /backup/$$3.$$1.backup"
           rsync $$5 --timeout=3600 -P --partial -e ssh $$2@$$3:$${4:-/docker/.} /backup/$$3.$$1.backup
           log "$$3 $$1 结束备份"
         }
