@@ -1,0 +1,49 @@
+version: "3"
+
+services:
+  rsync:
+    image: instrumentisto/rsync-ssh
+    restart: always
+    container_name: rsync
+    volumes:
+      - ${HOME}/.ssh:/root/.ssh
+      - /Volumes/BACK/backup:/backup
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        # 输出包含当前时间的日志
+        function log() {
+          echo -e "`date -d @$$((\`date +%s\`+3600*8)) '+%Y-%m-%d %H:%M:%S'` $$@"
+        }
+
+        # 备份服务器，用法：
+        # backup <备份名> <服务器地址> [备份目录默认/docker/.]
+        function backup() {
+          log "============================"
+          log "$$3 $$1 开始备份"
+          #rsync -az --timeout=3600 -P --partial --delete -e ssh root@$$2:$${3:-/docker/.} /backup/$$2.backup
+          #rsync -az --timeout=3600 -P --partial --delete -e ssh $$2@$$3:$${4:-/docker/.} /backup/$$3.$$1.backup
+          rsync $$5 --timeout=3600 -P --partial -e ssh $$2@$$3:$${4:-/docker/.} /backup/$$3.$$1.backup
+          log "$$3 $$1 结束备份"
+        }
+
+        # 开始备份任务 docker-compose up
+        while true
+        do
+        	
+          # 根据实际情况类推，添加服务器
+          backup "desktop" "pi" "192.168.1.241" /home/pi/Desktop/. -az
+          backup "docker" "pi" "192.168.1.241" /home/pi/docker/. -az
+          backup "svn" "root" "192.168.1.1" /mnt/sda1/svn/. -az
+          backup "pi3_" "pi" "192.168.1.231" /home/pi/* -lptgoDz
+          #backup "work" "jiayq" "192.168.1.204" /mnt/c/Work/. -az
+          backup "user" "jiayq" "192.168.1.204" /mnt/c/User/. -az
+          backup "git" "jiayq" "192.168.1.204" /mnt/c/Users/jiayq/git/. -az
+          backup "jiayq_" "jiayq" "192.168.1.204" /mnt/c/Users/jiayq/* -lptgoDz
+          #backup "ineva.cn服务器" "ineva.cn"
+
+          # 休眠5分钟
+          log "休眠5分钟"
+          sleep 300
+        done
